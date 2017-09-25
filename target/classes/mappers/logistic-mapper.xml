@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+                PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+                "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="logistic">
+
+    <!-- VehicleRoute Queries -->
+
+    <select id="vclrt_select" parameterType="map" resultMap="vclrt_resultMap">
+        SELECT
+        ID, VEHICLE_ID, START_TIME, END_TIME, ROUTE_ID, CREATED_ON, CREATED_BY, UPDATED_ON, UPDATED_BY, STATUS
+        FROM "acme_db".TXN_VEHICLE_ROUTE vRoute
+        <where>
+            <if test="id!=null">
+                AND ID = #{id}
+            </if>
+            <if test="vehicleId!=null">
+                AND VEHICLE_ID = #{vehicleId}
+            </if>
+            <if test="status!=null">
+                AND STATUS = #{status}
+            </if>
+        </where>
+    </select>
+    
+    <resultMap id="vclrt_resultMap" type="com.turvo.acme.entity.logistic.VehicleRoute">
+        <id column="ID" property="id"/>
+        <result column="VEHICLE_ID" property="vehicleId"/>
+        <result column="START_TIME" property="startTime"/>
+        <result column="END_TIME" property="endTime"/>
+        <result column="CREATED_ON" property="createdOn"/>
+        <result column="CREATED_BY" property="createdBy"/>
+        <result column="UPDATED_ON" property="updatedOn"/>
+        <result column="UPDATED_BY" property="updatedBy"/>
+        <result column="STATUS" property="status"/>
+        <association property="route" javaType="com.turvo.acme.entity.geolocation.Route">
+            <id column="ROUTE_ID" property="id"/>
+        </association>
+    </resultMap>
+
+    <insert id="vclrt_insert" parameterType="com.turvo.acme.entity.logistic.VehicleRoute" useGeneratedKeys="true" keyColumn="ID" keyProperty="id">
+        INSERT INTO "acme_db".TXN_VEHICLE_ROUTE (VEHICLE_ID, START_TIME, END_TIME,
+            ROUTE_ID, CREATED_ON, CREATED_BY, UPDATED_ON, UPDATED_BY, STATUS )
+        VALUES (#{vehicleId}, #{startTime}, #{endTime},
+            #{route.id}, #{createdOn}, #{createdBy}, #{updatedOn}, #{updatedBy}, #{status})
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID();
+        </selectKey>
+    </insert>
+
+
+    <delete id="vclrt_delete" parameterType="map">
+        DELETE FROM "acme_db".TXN_VEHICLE_ROUTE
+        <where>
+            <if test="id!= null">
+                AND ID = #{id}
+            </if>
+        </where>
+    </delete>
+
+    <update id="vclrt_update" parameterType="com.turvo.acme.entity.logistic.VehicleRoute">
+        UPDATE "acme_db".TXN_VEHICLE_ROUTE
+        SET VEHICLE_ID = #{vehicleId},
+        START_TIME = #{startTime},
+        END_TIME = #{endTime},
+        ROUTE_ID = #{route.id},
+        UPDATED_ON = #{updatedOn},
+        UPDATED_BY = #{updatedBy},
+        STATUS = #{status}
+        WHERE ID = #{id}
+    </update>
+
+    <!-- Shipment Queries -->
+
+    <insert id="shpmt_insert" parameterType="com.turvo.acme.entity.logistic.Shipment" useGeneratedKeys="true" keyColumn="ID" keyProperty="id">
+        INSERT INTO "acme_db".TXN_SHIPMENT (START_LOCATION_ID, END_LOCATION_ID, ROUTE_ID, START_TIME, END_TIME,
+            VEHICLE_ROUTE_ID, CREATED_ON, CREATED_BY, UPDATED_ON, UPDATED_BY, STATUS)
+        VALUES (#{startLocation.id}, #{endLocation.id}, #{predefinedRoute.id}, #{startTime}, #{endTime},
+            #{vehicleRouteId},  #{createdOn}, #{createdBy}, #{updatedOn}, #{updatedBy}, #{status})
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID();
+        </selectKey>
+    </insert>
+
+    <!-- adhoc Queries -->
+    <select id="active_vehicle_select" parameterType="map" resultType="map">
+        SELECT vRoute.ROUTE_ID ROUTE_ID
+        FROM "acme_db".TXN_VEHICLE_ROUTE vRoute
+        <where>
+            <if test="vehicleId!=null">
+                AND vRoute.VEHICLE_ID = #{vehicleId}
+            </if>
+            AND vRoute.STATUS = 1
+        </where>
+    </select>
+
+    <select id="active_vehicle_detail_select" parameterType="map" resultType="map">
+        SELECT vRoute.ID, vRoute.VEHICLE_ID, point.ID, route.CREATED_ON, point.POINT_ID
+        FROM "acme_db".TXN_VEHICLE_ROUTE vRoute
+        INNER JOIN "acme_db".TXN_ROUTE_DETAIL route ON route.ROUTE_ID=cRoute.ROUTE_ID
+        INNER JOIN "acme_db".TXN_LOCATION point ON point.ID=route.LOCATION_ID
+        WHERE vRoute.STATUS = 1
+        GROUP BY vRoute.VEHICLE_ID HAVING route.CREATED_ON = MAX(route.CREATED_ON)
+    </select>
+
+
+
+
+
+</mapper>

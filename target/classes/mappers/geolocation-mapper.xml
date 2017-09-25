@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+                PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+                "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="geolocation">
+
+    <select id="locat_select" parameterType="map" resultMap="locat_resultMap">
+        SELECT
+        loc.ID, loc.NAME, loc.DESCRIPTION, loc.CREATED_ON, loc.CREATED_BY, loc.UPDATED_ON, loc.UPDATED_BY, loc.STATUS
+        point.ID POINT_ID, point.LATITUDE, point.LONGITUDE
+        FROM "acme_db".TXN_LOCATION point INNNER JOIN "acme_db".CMT_LOCATION_DETAIL loc ON point.id=loc.location_id
+        <where>
+            <if test="id!=null">
+                AND loc.ID = #{id}
+            </if>
+            <if test="name!=null">
+                AND loc.NAME LIKE '%${name}%'
+            </if>
+        </where>
+    </select>
+
+    <resultMap id="locat_resultMap" type="com.turvo.acme.entity.geolocation.Location">
+        <id column="ID" property="id"/>
+        <result column="NAME" property="name"/>
+        <result column="DESCRIPTION" property="description"/>
+        <result column="CREATED_ON" property="createdOn"/>
+        <result column="CREATED_BY" property="createdBy"/>
+        <result column="UPDATED_ON" property="updatedOn"/>
+        <result column="UPDATED_BY" property="updatedBy"/>
+        <result column="STATUS" property="status"/>
+        <association property="point" resultMap="com.turvo.acme.entity.geolocation.GeoPoint">
+            <id column="POINT_ID" property="id"/>
+            <result column="LATITUDE" property="latitude"/>
+            <result column="LONGITUDE" property="longitude"/>
+        </association>
+    </resultMap>
+
+    <insert id="locat_insert" parameterType="com.turvo.acme.entity.geolocation.Location" useGeneratedKeys="true" keyColumn="ID" keyProperty="id">
+        INSERT INTO "acme_db".CMT_LOCATION_DETAIL (NAME, DESCRIPTION, CREATED_ON, CREATED_BY, UPDATED_ON, UPDATED_BY, STATUS, LOCATION_ID)
+        VALUES ( #{name}, #{description}, #{createdOn}, #{createdBy}, #{updatedOn}, #{updatedBy}, #{status}, #{point.id} )
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID();
+        </selectKey>
+    </insert>
+
+
+
+    <select id="geopt_select" parameterType="map" resultMap="geopt_resultMap">
+        SELECT point.ID, point.LATITUDE, point.LONGITUDE, point.POINT_ID,
+        <if test="routeId != null">
+            routeDetail.CREATED_ON
+        </if>
+        <if test="routeId == null">
+            CURRENT_TIMESTAMP() CREATED_ON
+        </if>
+        FROM "acme_db".TXN_LOCATION point
+        <if test="routeId != null">
+            INNER JOIN "acme_db".TXN_ROUTE_DETAIL routeDetail ON point.ID=routeDetail.LOCATION_ID
+        </if>
+        <where>
+            <if test="id!=null">
+                AND point.ID = #{id}
+            </if>
+            <if test="routeId != null">
+                AND routeDetail.ROUTE_ID = #{routeId}
+            </if>
+        </where>
+    </select>
+
+    <resultMap id="geopt_resultMap" type="com.turvo.acme.entity.geolocation.GeoPoint">
+        <id column="ID" property="id"/>
+        <result column="LATITUDE" property="latitude"/>
+        <result column="LONGITUDE" property="longitude"/>
+        <result column="CREATED_ON" property="createdOn"/>
+        <result column="POINT_ID" property="pointId"/>
+    </resultMap>
+
+    <insert id="geopt_insert" parameterType="com.turvo.acme.entity.geolocation.GeoPoint" useGeneratedKeys="true" keyColumn="ID" keyProperty="id" >
+        INSERT INTO "acme_db".TXN_LOCATION (LATITUDE, LONGITUDE, POINT_ID) VALUES ( #{latitude}, #{longitude}, #{pointId} )
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID();
+        </selectKey>
+    </insert>
+
+    <delete id="geopt_delete" parameterType="map">
+        DELETE FROM "acme_db".TXN_LOCATION
+        <where>
+            <if test="id != null">
+                ID = #{id}
+            </if>
+            <if test="routeId != null">
+                AND ID IN (SELECT LOCATION_ID FROM "acme_db".TXN_ROUTE_DETAIL WHERE ROUTE_ID = #{routeId})
+            </if>
+        </where>
+    </delete>
+
+    <!-- ROUTE QUERIES -->
+    
+    <select id="route_select" parameterType="map" resultMap="route_resultMap">
+        SELECT ID, NAME, TYPE_ID
+        FROM "acme_db".TXN_ROUTE
+        <where>
+            <if test="id!=null">
+                AND ID = #{id}
+            </if>
+            <if test="name !=null">
+                AND NAME like '%${name}%'
+            </if>
+            <if test="type!=null">
+                AND TYPE_ID = #{type}
+            </if>
+        </where>
+    </select>
+
+    <resultMap id="route_resultMap" type="com.turvo.acme.entity.geolocation.Route">
+        <id column="ID" property="id" />
+        <result column="NAME" property="name"/>
+        <result column="TYPE_ID" property="typeId"/>
+    </resultMap>
+
+    <delete id="route_delete" parameterType="map">
+        DELETE FROM "acme_db".TXN_ROUTE
+        WHERE ID = #{id}
+    </delete>
+
+    <update id="route_update" parameterType="com.turvo.acme.entity.geolocation.Route">
+        UPDATE "acme_db".TXN_ROUTE
+        SET NAME = #{name},
+        TYPE_ID = #{typeId}
+        WHERE ID = #{id}
+
+    </update>
+
+    <insert id="route_insert" parameterType="com.turvo.acme.entity.geolocation.Route" useGeneratedKeys="true" keyColumn="ID" keyProperty="id" >
+        INSERT INTO "acme_db".TXN_ROUTE (NAME, TYPE_ID)
+        VALUES ( #{name}, #{typeId} )
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID();
+        </selectKey>
+    </insert>
+
+    <!-- ADHOC QUERIES -->
+
+    <insert id="geoPoint_route_mapping_insert" parameterType="map">
+        INSERT INTO "acme_db".TXN_ROUTE_DETAIL (ROUTE_ID, LOCATION_ID, CREATED_ON)
+        VALUES (#{routeId}, #{geoPointId}, #{createdOn})
+    </insert>
+
+    <select id="geoPoint_location_count_select" parameterType="map" resultType="map">
+        SELECT COUNT(*) mapped_location_count
+        FROM "acme_db".CMT_LOCATION_DETAIL
+        <where>
+            LOCATION_ID = #{locationId}
+        </where>
+    </select>
+
+    <delete id="geopoint_by_locationId_delete" parameterType="map">
+        DELETE FROM "acme_db".TXN_LOCATION
+        WHERE ID IN (SELECT LOCATION_ID FROM "acme_db".CMT_LOCATION_DETAIL loc WHERE loc.ID = #{locationId} )
+    </delete>
+    
+    
+
+
+</mapper>

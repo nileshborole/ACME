@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+                PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+                "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="common">
+
+    <insert id="sylov_insert" parameterType="com.turvo.acme.entity.SystemLOV" useGeneratedKeys="true" keyColumn="ID" keyProperty="id">
+        INSERT INTO "acme_db".CMT_COMMON_LOV (NAME, VALUE, TYPE) VALUES ( #{name}, #{value}, #{type} )
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID();
+        </selectKey>
+    </insert>
+
+    <select id="sylov_select" parameterType="map" resultMap="sylov_resultMap">
+        SELECT ID, NAME, VALUE, TYPE
+        FROM "acme_db".CMT_COMMON_LOV
+        <where>
+            <if test="id!=null">
+                AND ID = #{id}
+            </if>
+            <if test="type!=null">
+                AND TYPE = #{type}
+            </if>
+        </where>
+    </select>
+
+    <delete id="sylov_delete" parameterType="map">
+        DELETE FROM "acme_db".CMT_COMMON_LOV
+        <where>
+            <if test="id!=null">
+                AND ID = #{id}
+            </if>
+            <if test="type!=null">
+                AND TYPE = #{type}
+            </if>
+        </where>
+    </delete>
+
+    <resultMap id="sylov_resultMap" type="com.turvo.acme.entity.SystemLOV">
+        <id column="ID" property="id"/>
+        <result column="NAME" property="name"/>
+        <result column="VALUE" property="value"/>
+        <result column="TYPE" property="type"/>
+    </resultMap>
+
+</mapper>

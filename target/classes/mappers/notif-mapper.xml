@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+                PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+                "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="notif">
+
+
+    <insert id="notif_insert" parameterType="com.turvo.acme.entity.notif.Notification" useGeneratedKeys="true" keyColumn="ID" keyProperty="id">
+        INSERT INTO "acme_db".CMT_ALERT (NAME, ALERT_TYPE_ID, NOTIF_METH_TYPE_ID, STATUS, CREATE_ON)
+        VALUES ( #{name}, #{notificationType}, #{notifMethTypeId}, #{status}, #{createdOn} )
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID();
+        </selectKey>
+    </insert>
+
+    <insert id="notif_params_insert" parameterType="map">
+        INSERT INTO "acme_db".CMT_ALERT_PARAMS (NAME, VALUE, ALERT_ID)
+        VALUES (#{name}, #{value}, #{alertId})
+    </insert>
+
+
+
+</mapper>
