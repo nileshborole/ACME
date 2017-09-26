@@ -3,7 +3,7 @@
 * How to deploy: The ACME application is implemented using SpringBoot framework and in memory H2 database,
 To run project please follow following steps:
 
-1. Go to project directory (cd <<project dir>>)
+1. Go to project directory (cd PROJECT_DIRECTORY)
 2. Run command mvn spring-boot:run
 
 * Prerequisites:
