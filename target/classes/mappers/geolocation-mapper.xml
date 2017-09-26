@@ -64,6 +64,9 @@
             <if test="routeId != null">
                 AND routeDetail.ROUTE_ID = #{routeId}
             </if>
+            <if test="minId!=null">
+                AND point.ID > #{minId}
+            </if>
         </where>
     </select>
 
@@ -159,7 +162,11 @@
         WHERE ID IN (SELECT LOCATION_ID FROM "acme_db".CMT_LOCATION_DETAIL loc WHERE loc.ID = #{locationId} )
     </delete>
     
-    
+    <update id="geopoint_mapping_update" parameterType="map">
+        UPDATE "acme_db".TXN_LOCATION
+        SET POINT_ID = #{pointId}
+        WHERE ID = #{id}
+    </update>
 
 
 </mapper>

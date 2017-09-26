@@ -94,8 +94,9 @@
         </where>
     </select>
 
-    <select id="active_vehicle_detail_select" parameterType="map" resultType="map">
-        SELECT vRoute.ID, vRoute.VEHICLE_ID, point.ID, route.CREATED_ON, point.POINT_ID
+    <select id="active_vehicle_detail_select" parameterType="map" resultType="activeVehicle_resultMap">
+        SELECT vRoute.ID ROUTE_ID, vRoute.VEHICLE_ID, point.ID, route.CREATED_ON, point.POINT_ID,
+                point.LATITUDE, point.LONGITUDE
         FROM "acme_db".TXN_VEHICLE_ROUTE vRoute
         INNER JOIN "acme_db".TXN_ROUTE_DETAIL route ON route.ROUTE_ID=vRoute.ROUTE_ID
         INNER JOIN "acme_db".TXN_LOCATION point ON point.ID=route.LOCATION_ID
@@ -103,15 +104,66 @@
         GROUP BY vRoute.VEHICLE_ID HAVING route.CREATED_ON = MAX(route.CREATED_ON)
     </select>
 
-    <select id="active_vehicle_prev_mapped_detail_select" parameterType="map" resultType="map">
-        SELECT vRoute.ID, vRoute.VEHICLE_ID, point.ID, route.CREATED_ON, point.POINT_ID
+    <select id="active_vehicle_prev_mapped_detail_select" parameterType="map" resultType="activeVehicle_resultMap">
+        SELECT vRoute.ID, vRoute.VEHICLE_ID, point.ID, route.CREATED_ON, point.POINT_ID,
+                point.LATITUDE, point.LONGITUDE
         FROM "acme_db".TXN_VEHICLE_ROUTE vRoute
         INNER JOIN "acme_db".TXN_ROUTE_DETAIL route ON route.ROUTE_ID=vRoute.ROUTE_ID
         INNER JOIN "acme_db".TXN_LOCATION point ON point.ID=route.LOCATION_ID
         WHERE vRoute.STATUS = 1 AND point.POINT_ID > -1
         GROUP BY vRoute.VEHICLE_ID HAVING route.CREATED_ON = MAX(route.CREATED_ON)
     </select>
+    
+    <resultMap id="activeVehicle_resultMap" type="com.turvo.acme.services.dto.ActiveVehicle">
+        <result column="ROUTE_ID" property="routeId"/>
+        <result column="VEHICLE_ID" property="vehicleId"/>
+        <result column="ID" property="pointId"/>
+        <result column="CREATED_ON" property="createdOn"/>
+        <result column="POINT_ID" property="mappedPointId"/>
+        <result column="LATITUDE" property="latitude"/>
+        <result column="LONGITUDE" property="longitude"/>
+    </resultMap>
 
+    <select id="active_shipment_select" parameterType="map" resultType="">
+        SELECT shpmt.VEHICLE_ROUTE_ID vehicle_id, shpmt.ID shipment_id
+        FROM "acme_db".TXN_SHIPMENT shpmt
+        WHERE shpmt.STATUS = 1
+    </select>
+
+    <resultMap id="activeShipment_resultMap" type="com.turvo.acme.services.dto.ActiveShipment">
+        <result column="VEHICLE_ROUTE_ID" property="vehicleId"/>
+        <result column="ID" property="shipmentId"/>
+    </resultMap>
+
+    <select id="deviated_active_shipement_select" parameterType="map" resultType="deviation_shpmt_resultSet">
+        SELECT SHIPMENT_ID, VEHICLE_ID, MAX(DEVIATION_TIME) DEVIATION_TIME
+        FROM "acme_db".TXN_SHIPMENT_DEVIATION_DETAIL
+        WHERE STATUS = 1
+        GROUP BY SHIPMENT_ID, VEHICLE_ID
+    </select>
+
+    <resultMap id="deviation_shpmt_resultSet" type="com.turvo.acme.services.dto.DeviatedShipment">
+        <result column="SHIPMENT_ID" property="shipmentId"/>
+        <result column="VEHICLE_ID" property="vehicleId"/>
+        <result column="DEVIATION_TIME" property="deviationTime"/>
+    </resultMap>
+
+
+    <insert id="deviation_shipment_insert" parameterType="map">
+        INSERT INTO
+            "acme_db".TXN_SHIPMENT_DEVIATION_DETAIL( SHIPMENT_ID, VEHICLE_ID, DEVIATION_POINT_ID,
+                DEVIATION_FROM_POINT_ID, DEVIATION_TIME, STATUS)
+        VALUES
+            ( #{shipmentId}, #{vehicleId}, #{deviationPointId}, #{deviatedFromPointId}, #{deviationTime}, 1)
+    </insert>
+
+    <update id="deviation_shipment_status_update" parameterType="map">
+        UPDATE "acme_db".TXN_SHIPMENT_DEVIATION_DETAIL
+            SET STATUS = 2
+        WHERE SHIPMENT_ID = #{shipmentId}
+            AND STATUS = 1
+            AND VEHICLE_ID = #{vehicleId}
+    </update>
 
 
 </mapper>
