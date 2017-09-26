@@ -13,8 +13,12 @@ To run project please follow following steps:
 REST APIs:
 
 1. To Push Truck Geo Location:
-    POST Request : HOST:PORT/logistic/gpsListener/vehicle
+    POST Request : http://HOST:PORT/logistic/gpsListener/vehicle
     BODY : { vehicleId : ID, latitude : LATITUDE, longitude : LONGITUDE }
     
 2. To generate shipment route from sorce and destination:
-    GET Request : HOST:PORT/logistic/shipment/new?source=&destination=
+    GET Request : http://HOST:PORT/logistic/shipment/new?source=&destination=
+    
+3. For H2 in-memory database console:
+    http://HOST:PORT/db_console
+    
